@@ -22,8 +22,7 @@ def download_file(url, destination):
                 saved_file.write(chunk)
 
 
-def install(splunk_pkg_url, type='splunk', start_after_install=True,
-            upgrrade=False, splunk_home=None):
+def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
     """
     install Splunk
 
@@ -31,10 +30,8 @@ def install(splunk_pkg_url, type='splunk', start_after_install=True,
     :type splunk_pkg_url: string
     :param type: splunk, splunkforwarder or splunklite
     :type type: string
-    :param start_after_install: true: start splunk right after installation
-    :type start_after_install: boolean
-    :param upgrrade: True if you want to upgrade splunk
-    :type upgrrade: bool
+    :param upgrade: True if you want to upgrade splunk
+    :type upgrade: bool
     :param splunk_home: path for splunk install to
     :type splunk_home: string
     :rtype: dict
@@ -50,16 +47,17 @@ def install(splunk_pkg_url, type='splunk', start_after_install=True,
 
     download_file(url=url, destination=pkg_path)
 
-    installer = InstallerFactory.create_installer(splunk_type=type,
-                                                  pkg_path=pkg_path)
+    installer = InstallerFactory.create_installer(
+        splunk_type=type, pkg_path=pkg_path, splunk_home=splunk_home)
 
-    if installer.is_installed() and not is_upgrade:
-        logger.debug('splunk is installed')
-        return dict({'retcode': 9,
-                     'stdout': 'splunk is installed',
-                     'stderr': 'splunk is installed'})
+    if installer.is_installed() and not upgrade:
+        msg = 'splunk is installed on {s}'.format(s=splunk_home)
+        logger.debug(msg)
+        print msg
+    return installer.install()
 
-    return installer.install(pkg_path, splunk_home)
+
+def uninstall(splunk_home):
 
 
 def run_cmd(cmd):
