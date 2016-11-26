@@ -41,7 +41,8 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
 
     # download the package
     dest_root = tempfile.gettempdir()
-    pkg_path = os.path.join(dest_root, os.sep, os.path.basename(url))
+    pkg_path = os.path.join(dest_root, os.path.basename(url))
+    print pkg_path
     logger.debug('download pkg to: {p}'.format(p=pkg_path))
     logger.debug('download pkg from: {u}'.format(u=url))
 
@@ -55,9 +56,6 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
         logger.debug(msg)
         print msg
     return installer.install()
-
-
-def uninstall(splunk_home):
 
 
 def run_cmd(cmd):
@@ -76,14 +74,14 @@ class InstallerFactory(object):
         pass
 
     @staticmethod
-    def create_installer(pkg_path, splunk_type=None):
+    def create_installer(pkg_path, splunk_type, splunk_home):
         if "linux" in PLATFORM:
-            installer = LinuxTgzInstaller(splunk_type)
+            installer = LinuxTgzInstaller(pkg_path, splunk_type, splunk_home)
         elif "win" in PLATFORM:
             if pkg_path.endswith('.zip'):
-                installer = WindowsZipInstaller()
+                installer = WindowsZipInstaller(pkg_path, splunk_type, splunk_home)
             else:
-                installer = WindowsMsiInstaller(splunk_type)
+                installer = WindowsMsiInstaller(pkg_path, splunk_type, splunk_home)
         else:
             # to do: throw error when platform is not supported
             raise NotImplementedError
@@ -108,7 +106,7 @@ class Installer(object):
 
 class LinuxTgzInstaller(Installer):
     def __init__(self, pkg_path, splunk_type, splunk_home):
-        super(LinuxTgzInstaller, self).__init__(splunk_type)
+        super(LinuxTgzInstaller, self).__init__(pkg_path, splunk_type, splunk_home)
 
     def install(self):
         if not os.path.exists(self.splunk_home):
@@ -120,9 +118,9 @@ class LinuxTgzInstaller(Installer):
 
         cmd = ("tar --strip-components=1 -xf {p} -C {s}; {s}/bin/splunk "
                "start --accept-license --answer-yes"
-               .format(s=self.splunk_home, p=pkg_path))
+               .format(s=self.splunk_home, p=self.pkg_path))
 
-        return run_cmd(cmd, python_shell=True)
+        return run_cmd(cmd)
 
     def is_installed(self):
         return os.path.exists(os.path.join(self.splunk_home, "bin", "splunk"))
