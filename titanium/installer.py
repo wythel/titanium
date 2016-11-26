@@ -135,3 +135,43 @@ class LinuxTgzInstaller(Installer):
 
         # remove splunk home
         shutil.rmtree(self.splunk_home)
+
+
+class WindowsMsiInstaller(Installer):
+    def __init__(self, pkg_path, splunk_type, splunk_home):
+        super(WindowsMsiInstaller, self).__init__(
+            pkg_path, splunk_type, splunk_home)
+
+    def install(self, **kwargs):
+        if not os.path.exists(self.splunk_home):
+            os.mkdir(self.splunk_home)
+
+        if self.is_installed():
+            cmd = "{s}\\bin\\splunk stop".format(s=self.splunk_home)
+            run_cmd(cmd)
+
+        install_flags = []
+        for key, value in kwargs.iteritems():
+            install_flags.append('{k}="{v}"'.format(k=key, v=value))
+
+        cmd = 'msiexec /i "{c}" INSTALLDIR="{h}" AGREETOLICENSE=Yes {f} {q} ' \
+              '/L*V "C:\\msi_install.log"'. \
+               format(c=self.pkg_path, h=self.splunk_home, q='/quiet',
+                       f=' '.join(install_flags))
+
+        return run_cmd(cmd)
+
+    def is_installed(self):
+        return os.path.exists(os.path.join(self.splunk_home, "bin", "splunk"))
+
+    def uninstall(self):
+        if not self.is_installed():
+            return True
+
+        # stop splunk
+        cmd = "{s}\\bin\\splunk stop".format(s=self.splunk_home)
+        run_cmd(cmd)
+
+        # uninstall
+        cmd = 'msiexec /x {c} /quiet SUPPRESS_SURVEY=1'.format(c=self.pkg_path)
+        run_cmd(cmd)
