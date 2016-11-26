@@ -54,8 +54,9 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
         msg = 'splunk is installed on {s}'.format(s=splunk_home)
         logger.debug(msg)
         print msg
-    return installer
 
+    installer.install()
+    return installer
 
 def run_cmd(cmd):
     '''
@@ -161,7 +162,7 @@ class WindowsMsiInstaller(Installer):
         return run_cmd(cmd)
 
     def is_installed(self):
-        return os.path.exists(os.path.join(self.splunk_home, "bin", "splunk"))
+        return os.path.exists(os.path.join(self.splunk_home, "bin", "splunk.exe"))
 
     def uninstall(self):
         if not self.is_installed():
