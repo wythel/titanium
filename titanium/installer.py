@@ -42,7 +42,6 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
     # download the package
     dest_root = tempfile.gettempdir()
     pkg_path = os.path.join(dest_root, os.path.basename(url))
-    print pkg_path
     logger.debug('download pkg to: {p}'.format(p=pkg_path))
     logger.debug('download pkg from: {u}'.format(u=url))
 
