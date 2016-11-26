@@ -177,3 +177,42 @@ class WindowsMsiInstaller(Installer):
         # uninstall
         cmd = 'msiexec /x {c} /quiet SUPPRESS_SURVEY=1'.format(c=self.pkg_path)
         run_cmd(cmd)
+
+
+class WindowsZipInstaller(Installer):
+    def __init__(self, pkg_path, splunk_type, splunk_home):
+        super(WindowsZipInstaller, self).__init__(
+            pkg_path, splunk_type, splunk_home)
+
+    def install(self):
+        if not os.path.exists(self.splunk_home):
+            os.mkdir(self.splunk_home)
+
+        if self.is_installed():
+            cmd = "{s}\\bin\\splunk stop".format(s=self.splunk_home)
+            run_cmd(cmd)
+
+        par_home = os.path.dirname(self.splunk_home)
+
+        cmd = ("cd c:\\ & unzip {p} -d {par} & {s}\\bin\\splunk.exe "
+               "enable boot-start & {s}\\bin\\splunk.exe start "
+               "--accept-license --answer-yes".format(
+                s=self.splunk_home, p=self.pkg_path, par=par_home))
+        return run_cmd(cmd)
+
+    def is_installed(self):
+        return os.path.exists(
+            os.path.join(self.splunk_home, "bin", "splunk.exe"))
+
+    def uninstall(self):
+        if not self.is_installed():
+            return True
+
+        # stop splunk
+        cmd = "{s}\\bin\\splunk stop".format(s=self.splunk_home)
+        run_cmd(cmd)
+
+        shutil.rmtree(self.splunk_home)
+
+        run_cmd('sc delete Splunkd')
+        run_cmd('sc delete Splunkweb')
