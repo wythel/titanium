@@ -54,7 +54,7 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
         msg = 'splunk is installed on {s}'.format(s=splunk_home)
         logger.debug(msg)
         print msg
-    return installer.install()
+    return installer
 
 
 def run_cmd(cmd):
