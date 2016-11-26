@@ -58,6 +58,7 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
     installer.install()
     return installer
 
+
 def run_cmd(cmd):
     '''
     run command with subprocess
@@ -156,13 +157,14 @@ class WindowsMsiInstaller(Installer):
 
         cmd = 'msiexec /i "{c}" INSTALLDIR="{h}" AGREETOLICENSE=Yes {f} {q} ' \
               '/L*V "C:\\msi_install.log"'. \
-               format(c=self.pkg_path, h=self.splunk_home, q='/quiet',
-                       f=' '.join(install_flags))
+              format(c=self.pkg_path, h=self.splunk_home, q='/quiet',
+                     f=' '.join(install_flags))
 
         return run_cmd(cmd)
 
     def is_installed(self):
-        return os.path.exists(os.path.join(self.splunk_home, "bin", "splunk.exe"))
+        return os.path.exists(
+            os.path.join(self.splunk_home, "bin", "splunk.exe"))
 
     def uninstall(self):
         if not self.is_installed():
