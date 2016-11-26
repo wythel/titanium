@@ -76,16 +76,15 @@ class InstallerFactory(object):
     @staticmethod
     def create_installer(pkg_path, splunk_type, splunk_home):
         if "linux" in PLATFORM:
-            installer = LinuxTgzInstaller(pkg_path, splunk_type, splunk_home)
+            return LinuxTgzInstaller(pkg_path, splunk_type, splunk_home)
         elif "win" in PLATFORM:
             if pkg_path.endswith('.zip'):
-                installer = WindowsZipInstaller(pkg_path, splunk_type, splunk_home)
+                return WindowsZipInstaller(pkg_path, splunk_type, splunk_home)
             else:
-                installer = WindowsMsiInstaller(pkg_path, splunk_type, splunk_home)
+                return WindowsMsiInstaller(pkg_path, splunk_type, splunk_home)
         else:
-            # to do: throw error when platform is not supported
-            raise NotImplementedError
-        return installer
+            raise (Exception,
+                   "The platform {p} is not supported".format(p=PLATFORM))
 
 
 class Installer(object):
@@ -106,7 +105,8 @@ class Installer(object):
 
 class LinuxTgzInstaller(Installer):
     def __init__(self, pkg_path, splunk_type, splunk_home):
-        super(LinuxTgzInstaller, self).__init__(pkg_path, splunk_type, splunk_home)
+        super(LinuxTgzInstaller, self).__init__(
+            pkg_path, splunk_type, splunk_home)
 
     def install(self):
         if not os.path.exists(self.splunk_home):
