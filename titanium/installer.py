@@ -5,6 +5,7 @@ import logging
 import requests
 import subprocess
 import os
+from zipfile import ZipFile
 
 
 PLATFORM = sys.platform
@@ -194,9 +195,13 @@ class WindowsZipInstaller(Installer):
 
         par_home = os.path.dirname(self.splunk_home)
 
-        cmd = ("cd c:\\ & unzip {p} -d {par} & {s}\\bin\\splunk.exe "
-               "enable boot-start & {s}\\bin\\splunk.exe start "
-               "--accept-license --answer-yes".format(
+        # unzip the pkg
+        zip_file = ZipFile(self.pkg_path)
+        zip_file.extractall(path=par_home)
+
+        cmd = ("{s}\\bin\\splunk.exe enable boot-start & "
+               "{s}\\bin\\splunk.exe start --accept-license --answer-yes"
+               .format(
                 s=self.splunk_home, p=self.pkg_path, par=par_home))
         return run_cmd(cmd)
 
