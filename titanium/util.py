@@ -1,4 +1,5 @@
 import subprocess
+import os
 
 
 def run_cmd(cmd):
@@ -10,5 +11,5 @@ def run_cmd(cmd):
                             stderr=subprocess.PIPE)
     proc.wait()
     stdout = "".join(proc.stdout.readlines())
-    stderr = "".join(proc.strerr.readlines())
+    stderr = "".join(proc.stderr.readlines())
     return {"stdout": stdout, "stderr": stderr, 'retcode': proc.returncode}
