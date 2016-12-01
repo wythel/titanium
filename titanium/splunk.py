@@ -88,6 +88,14 @@ class Splunk(object):
             username=self.username, password=self.password, owner=owner,
             app=app, sharing=sharing, autologin=True)
 
+    def allow_remote_login(self):
+        '''
+        config allowRemoteLogin under server.conf
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+        self.edit_conf_file(
+            'server', 'general', {'allowRemoteLogin': 'always'})
+
     @property
     def mgmt_port(self):
         '''
@@ -175,12 +183,12 @@ class Splunk(object):
 
         stanza.submit(data)
 
-        if do_restart:
+        if do_restart and self.splunk.restart_required:
             self.restart()
 
     def read_conf_file(
-            self, conf_name, stanza_name, key_name=None, owner=None, app=None,
-            sharing='system'):
+            self, conf_name, stanza_name=None, key_name=None, owner=None,
+            app=None, sharing='system'):
         """
         read config file
 
@@ -198,18 +206,19 @@ class Splunk(object):
 
         try:
             conf = self.splunk.confs[conf_name]
+            if stanza_name is None:
+                return conf
         except KeyError:
             logger.warn("no such conf file %s" % conf_name)
             return None
 
         try:
             stanza = conf[stanza_name]
+            if key_name is None:
+                return stanza.content
         except KeyError:
             logger.warn('no such stanza, %s' % stanza_name)
             return None
-
-        if key_name is None:
-            return stanza.content
 
         if key_name not in stanza.content:
             logger.warn('no such key name, %s' % key_name)
@@ -286,6 +295,38 @@ class Splunk(object):
                     'cluster_label': cluster_label}
 
         self.edit_conf_file('server', 'clustering', data)
+
+    def is_cluster_master(self):
+        '''
+        check if this instance is a cluster master or not
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+        mode = self.read_conf_file('server', 'clustering', 'mode')
+        return 'master' == mode
+
+    def is_shc_deployer(self):
+        '''
+        check if this instance is a shc deployer or not
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+        content = self.read_conf_file('server', 'shclustering')
+        return content is not None and 'conf_deploy_fetch_url' not in content
+
+    def is_license_master(self):
+        '''
+        check if this instance is a license master
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+        master_uri = self.read_conf_file('server', 'license', 'master_uri')
+        return 'self' == master_uri
+
+    def is_deployment_server(self):
+        '''
+        check if this instance is a deployment server
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+        content = self.read_conf_file('serverclass')
+        return len(content) > 1
 
     def config_cluster_slave(
             self, pass4SymmKey, cluster_label, master_uri,
@@ -524,3 +565,116 @@ class Splunk(object):
 
         if result['retcode'] != 0:
             raise CommandExecutionError(result['stderr'] + result['stdout'])
+
+    def config_dmc(
+            self, searchheads, deployer, indexers,
+            cluster_master, license_master, deployment_server, cluster_label,
+            shcluster_label):
+        '''
+        configure dmc
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+
+        if self.is_cluster_master():
+            self.config_search_peer(searchheads + license_master + deployer)
+        else:
+            self.config_search_peer(
+                searchheads + license_master + deployer + indexers)
+
+        # set distsearch groups by editing distsearch.conf
+        # indexer
+        self.edit_conf_file(
+            'distsearch', 'distributedSearch:dmc_group_indexer',
+            {'servers': ','.join(indexers), 'default': True}, do_restart=False)
+
+        # search head
+        self.edit_conf_file(
+            'distsearch', 'distributedSearch:dmc_group_search_head',
+            {'servers': ','.join(searchheads)}, do_restart=False)
+
+        # kv store
+        self.edit_conf_file(
+            'distsearch', 'distributedSearch:dmc_group_kv_store',
+            {'servers': ','.join(searchheads)}, do_restart=False)
+
+        # license master
+        if self.is_license_master():
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_license_master',
+                {'servers': 'localhost:localhost'}, do_restart=False)
+        elif len(license_master) > 0:
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_license_master',
+                {'servers': ','.join(license_master)}, do_restart=False)
+        else:
+            pass
+
+        # cluster master
+        if self.is_cluster_master():
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_cluster_master',
+                {'servers': 'localhost:localhost'}, do_restart=False)
+        elif len(cluster_master) > 0:
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_cluster_master',
+                {'servers': ','.join(cluster_master)}, do_restart=False)
+        else:
+            pass
+
+        # deployment server
+        if self.is_deployment_server():
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_deployment_server',
+                {'servers': 'localhost:localhost'}, do_restart=False)
+        elif len(deployment_server) > 0:
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_deployment_server',
+                {'servers': ','.join(deployment_server)}, do_restart=False)
+        else:
+            pass
+
+        # shc deployer
+        if self.is_shc_deployer():
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_deployment_server',
+                {'servers': 'localhost:localhost'}, do_restart=False)
+        elif len(deployer) > 0:
+            self.edit_conf_file(
+                'distsearch', 'distributedSearch:dmc_group_deployment_server',
+                {'servers': ','.join(deployer)}, do_restart=False)
+        else:
+            pass
+
+        # we should do following 2 steps only after ember
+        if len(cluster_master) > 0:
+            stanza = 'distributedSearch:dmc_indexerclustergroup_{l}'.format(
+                l=cluster_label)
+
+            self.edit_conf_file(
+                'distsearch', stanza,
+                {"servers": ",".join(indexers + searchheads)},
+                do_restart=False)
+
+        # config shcluster group if shcluster is enabled
+        if len(deployer) > 0:
+            stanza = 'distributedSearch:dmc_searchheadclustergroup_{l}'.format(
+                shcluster_label)
+
+            self.edit_conf_file(
+                'distsearch', stanza,
+                {"servers": ",".join(searchheads + deployer)},
+                do_restart=False)
+
+        # add all machines to splunk_management_console_assets.conf
+        all_peers = indexers + searchheads + deployer + deployment_server + \
+            license_master
+
+        self.change_namespace('nobody', 'splunk_management_console', 'app')
+        self.edit_conf_file(
+            'splunk_management_console_assets', 'settings',
+            {'configuredPeers': ','.join(all_peers)}, do_restart=True)
+
+        # Run the "DMC Asset - Build Full" saved search
+        self.splunk.post(
+            'saved/searches/DMC Asset - Build Full/dispatch',
+            trigger_actions=1)
