@@ -3,9 +3,9 @@ import shutil
 import tempfile
 import logging
 import requests
-import subprocess
 import os
 from zipfile import ZipFile
+from util import run_cmd
 
 
 PLATFORM = sys.platform
@@ -58,17 +58,6 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
 
     installer.install()
     return installer
-
-
-def run_cmd(cmd):
-    '''
-    run command with subprocess
-    '''
-    proc = subprocess.Popen(cmd, env=os.environ, shell=True,
-                            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    proc.wait()
-    return proc
 
 
 class InstallerFactory(object):

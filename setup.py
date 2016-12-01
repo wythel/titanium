@@ -4,7 +4,7 @@ This is a python module provide a wrapper of terraform command line tool
 from setuptools import setup
 import os
 
-dependencies = ['splunk-sdk', 'requests']
+dependencies = ['splunk-sdk', 'requests', 'netifaces']
 module_name = 'titanium'
 short_description = 'This is a wrapper of Splunk python SDK'
 
