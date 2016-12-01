@@ -14,7 +14,7 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope='session')
-def install_splunk(request):
+def install(request):
     config = request.config
 
     if not config.getoption('--skip-install-splunk'):
