@@ -1,9 +1,11 @@
+import pytest
 from titanium import installer
 from titanium.splunk import Splunk
 
 
-pkg_url = 'http://releases.splunk.com/released_builds/6.3.0/splunk/linux/splunk-6.3.0-aa7d4b1ccb80-Linux-x86_64.tgz'
-splunk_home = '/home/eserv/titanium/splunk'
+pkg_url = pytest.config.pkg_url
+splunk_home = pytest.config.splunk_home
+skip_installation = pytest.config.skip_install_splunk
 
 
 class TestSplunkConfig(object):
@@ -11,11 +13,13 @@ class TestSplunkConfig(object):
     Test configuring splunk configs
     '''
     def setup_class(cls):
-        cls.installer = installer.install(pkg_url, splunk_home)
+        if not skip_installation:
+            cls.installer = installer.install(pkg_url, splunk_home)
         cls.splunk = Splunk(splunk_home=splunk_home)
 
     def teardown_class(cls):
-        cls.installer.uninstall()
+        if not skip_installation:
+            cls.installer.uninstall()
 
     def test_read_config(self):
         '''
