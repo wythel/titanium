@@ -96,6 +96,15 @@ class Splunk(object):
         self.edit_conf_file(
             'server', 'general', {'allowRemoteLogin': 'always'})
 
+    def enable_js_debug_mode(self):
+        '''
+        by disabling js cache and minify js, javascript could be debugged
+        by browser console
+        '''
+        self.change_namespace('nobody', 'nobody', 'system')
+        self.edit_conf_file(
+            'web', 'settings', {'js_no_cache': True, 'minify_js': False})
+
     @property
     def mgmt_port(self):
         '''
@@ -565,6 +574,19 @@ class Splunk(object):
 
         if result['retcode'] != 0:
             raise CommandExecutionError(result['stderr'] + result['stdout'])
+
+    def get_listening_ports(self):
+        '''
+        get listening ports
+        '''
+        self.change_namespace('nobody', 'search', 'app')
+        stanzas = self.read_conf_file('inputs')
+
+        ret = []
+        for stanza in stanzas.list():
+            if 'splunktcp://' in stanza.name:
+                ret.append(stanza.name.replace('splunktcp://'))
+        return ret
 
     def config_dmc(
             self, searchheads, deployer, indexers,
