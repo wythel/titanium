@@ -259,6 +259,7 @@ class Splunk(object):
         :param site_replication_factor: site replication factor for the cluster
         :param site_search_factor: site search factor of the cluster
         """
+        self.change_namespace('nobody', 'nobody', 'system')
 
         def get_availaible_sites():
             return ', '.join(

@@ -4,12 +4,15 @@ from titanium.splunk import Splunk
 
 
 def pytest_addoption(parser):
-    parser.addoption("--splunk-home", default="/opt/splunk",
+    parser.addoption(
+        "--splunk-home", default="/opt/splunk",
         dest="splunk_home", help="where to install splunk")
-    parser.addoption("--skip-install-splunk", action='store_true',
+    parser.addoption(
+        "--skip-install-splunk", action='store_true',
         dest='skip_install_splunk',
         help="add this option if splunk is ready to be tested")
-    parser.addoption("--pkg-url", dest="pkg_url",
+    parser.addoption(
+        "--pkg-url", dest="pkg_url",
         help="url to the package for testing")
 
 
@@ -22,7 +25,8 @@ def install(request):
             config.getoption('--pkg-url'), config.getoption('--splunk-home'))
         yield my_installer
         my_installer.uninstall()
-    yield None
+    else:
+        yield None
 
 
 @pytest.fixture(scope='function')

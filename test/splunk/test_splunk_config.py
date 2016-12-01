@@ -1,7 +1,3 @@
-from titanium import installer
-from titanium.splunk import Splunk
-
-
 def test_read_config(install, splunk):
     '''
     test read conf file
