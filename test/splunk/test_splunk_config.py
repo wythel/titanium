@@ -22,7 +22,7 @@ class TestSplunkConfig(object):
         test read conf file
         '''
         content = self.splunk.read_conf_file(
-            'savedsearches', "Error in the last hour", user='admin',
+            'savedsearches', "Errors in the last hour", owner='admin',
             app='search', sharing='app')
         search = ('error OR failed OR severe OR ( sourcetype=access_* '
                   '( 404 OR 500 OR 503 ) )')
