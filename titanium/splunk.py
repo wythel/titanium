@@ -58,6 +58,27 @@ class Splunk(object):
         process = run_cmd(cmd)
         return process
 
+    def is_running(self):
+        '''
+        return splunk is running or not
+        '''
+        result = self.cli("status", auth=None)
+        return 'splunkd is running' in result['stdout']
+
+    def start(self):
+        '''
+        start splunk via cli
+        '''
+        result = self.cli("start", auth=None)
+        return result['retcode']
+
+    def stop(self):
+        '''
+        stop splunk via cli
+        '''
+        result = self.cli("stop", auth=None)
+        return result['retcode']
+
     def restart(self, interface='cli'):
         '''
         restart splunk
@@ -77,7 +98,7 @@ class Splunk(object):
             app=app, sharing=sharing, autologin=True)
 
     @property
-    def get_mgmt_port(self):
+    def mgmt_port(self):
         '''
         get mgmt uri of splunk
 
@@ -99,7 +120,7 @@ class Splunk(object):
         Get mgmt uri
         '''
         ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
-        return ip + ":" + self.get_mgmt_port()
+        return ip + ":" + self.mgmt_port
 
     def add_license(self, path):
         '''

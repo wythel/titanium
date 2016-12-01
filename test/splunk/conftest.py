@@ -25,7 +25,10 @@ def install_splunk(request):
     yield None
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def splunk(request):
     config = request.config
-    yield Splunk(config.getoption('--splunk-home'))
+    splunk = Splunk(config.getoption('--splunk-home'))
+    yield splunk
+    if not splunk.is_running():
+        splunk.start()

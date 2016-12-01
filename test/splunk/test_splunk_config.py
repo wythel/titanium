@@ -30,3 +30,22 @@ class TestSplunkConfig(object):
 
         content = splunk.read_conf_file('savedsearches', name)
         assert content['search'] == data['search']
+
+    def test_get_mgmt_port(self, install_splunk, splunk):
+        '''
+        test getting mgmt port
+        '''
+        assert '8089' == splunk.mgmt_port
+
+    def test_is_splunk_running(self, install_splunk, splunk):
+        '''
+        test if splunk is running
+        '''
+        assert splunk.is_running()
+
+    def test_stop_splunk(self, install_splunk, splunk):
+        '''
+        test stop splunk
+        '''
+        splunk.stop()
+        assert not splunk.is_running()
