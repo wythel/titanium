@@ -15,11 +15,23 @@ class TestSplunkConfig(object):
         cls.splunk = Splunk(splunk_home=splunk_home)
 
     def teardown_class(cls):
-        # cls.installer.uninstall()
+        cls.installer.uninstall()
 
-    def test_read_write_config(self):
+    def test_read_config(self):
         '''
-        test read and write config file
+        test read conf file
+        '''
+        content = self.splunk.read_conf_file(
+            'savedsearches', "Error in the last hour", user='admin',
+            app='search', sharing='app')
+        search = ('error OR failed OR severe OR ( sourcetype=access_* '
+                  '( 404 OR 500 OR 503 ) )')
+
+        assert content['search'] == search
+
+    def test_write_config(self):
+        '''
+        test write config file
         '''
         # write to savedsearches.conf
         name = 'test_titanium'

@@ -37,7 +37,7 @@ class Splunk(object):
         :type password: ``string``
         '''
         self.splunk = client.connect(
-            username=username, passowrd=password, owner=owner, app=app,
+            username=username, password=password, owner=owner, app=app,
             sharing=sharing, scheme=scheme, autologin=True)
 
         self.splunk_home = splunk_home
@@ -50,7 +50,7 @@ class Splunk(object):
         run cli
         '''
         execute = os.path.join(self.splunk_home, 'bin', 'splunk')
-        if auth is not None:
+        if auth is None:
             cmd = '{e} {c}'.format(e=execute, c=cli)
         else:
             cmd = '{e} {c} -auth {a}'.format(e=execute, c=cli, a=auth)
@@ -73,7 +73,7 @@ class Splunk(object):
         '''
         '''
         self.splunk = client.connect(
-            username=self.username, passowrd=self.password, owner=owner,
+            username=self.username, password=self.password, owner=owner,
             app=app, sharing=sharing, autologin=True)
 
     @property
@@ -101,7 +101,7 @@ class Splunk(object):
         ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
         return ip + ":" + self.get_mgmt_port()
 
-    def add_license(path):
+    def add_license(self, path):
         '''
         add license to splunk
         :param path: path to the license file
