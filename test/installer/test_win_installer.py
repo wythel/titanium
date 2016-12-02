@@ -1,6 +1,6 @@
 from titanium import installer
 
-url = 'http://releases.splunk.com/dl/ace_builds/5.0.17-20161121-1500/splunk-5.0.17-278057-x64-release.msi'
+url = 'https://www.dropbox.com/s/erb3s5v5drfymh5/splunk-6.3.1-f3e41e4b37b2-x64-release.msi?dl=0'
 splunk_home = 'C:\\Program Files\\Splunk'
 
 my_installer = installer.install(url, splunk_home)
