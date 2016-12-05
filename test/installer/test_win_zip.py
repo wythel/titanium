@@ -1,6 +1,7 @@
+import sys
 from titanium import installer
 
-url = 'https://www.dropbox.com/s/w33tvovj1fqnx6w/splunk-6.3.2-aaff59bb082c-windows-64.zip?dl=0'
+url = sys.argv[1]
 splunk_home = 'C:\\Program Files\\Splunk'
 
 my_installer = installer.install(url, splunk_home)
