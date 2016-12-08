@@ -54,7 +54,7 @@ class Splunk(object):
         return splunk is running or not
         '''
         result = self.cli("status", auth=None)
-        return 'pid' in result['stdout']
+        return 'pid' in result['stdout'].lower()
 
     def start(self):
         '''
