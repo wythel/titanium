@@ -16,6 +16,7 @@ def download_file(url, destination):
     '''
     download a file to destination
     '''
+    print destination
     response = requests.get(url, stream=True)
     with open(destination, "wb") as saved_file:
         for chunk in response.iter_content(chunk_size=1024):
@@ -42,7 +43,7 @@ def install(splunk_pkg_url, splunk_home, type='splunk', upgrade=False):
 
     # download the package
     dest_root = tempfile.gettempdir()
-    pkg_path = os.path.join(dest_root, os.path.basename(url))
+    pkg_path = os.path.join(dest_root, os.path.basename(url).replace("?dl=0", ""))
     logger.debug('download pkg to: {p}'.format(p=pkg_path))
     logger.debug('download pkg from: {u}'.format(u=url))
 

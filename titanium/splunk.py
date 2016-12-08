@@ -42,10 +42,9 @@ class Splunk(object):
         '''
         execute = os.path.join(self.splunk_home, 'bin', 'splunk')
         if auth is None:
-            cmd = '{e} {c}'.format(e=execute, c=cli)
+            cmd = '"{e}" {c}'.format(e=execute, c=cli)
         else:
-            cmd = '{e} {c} -auth {a}'.format(e=execute, c=cli, a=auth)
-
+            cmd = '"{e}" {c} -auth {a}'.format(e=execute, c=cli, a=auth)
         process = run_cmd(cmd)
         return process
 
@@ -54,7 +53,7 @@ class Splunk(object):
         return splunk is running or not
         '''
         result = self.cli("status", auth=None)
-        return 'splunkd is running' in result['stdout']
+        return 'running' in result['stdout'].lower()
 
     def start(self):
         '''
