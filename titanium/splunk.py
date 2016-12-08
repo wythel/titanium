@@ -15,7 +15,7 @@ class Splunk(object):
     This class represents a splunk instance
     '''
     def __init__(self, splunk_home, username="admin", password="changeme",
-                 scheme='https'):
+                 scheme='https', login=True):
         '''
         :param host: The host name (the default is "localhost").
         :type host: ``string``
@@ -28,14 +28,21 @@ class Splunk(object):
         :param `password`: The password for the Splunk account.
         :type password: ``string``
         '''
-        self.splunk = client.connect(
-            username=username, password=password, scheme=scheme,
-            autologin=True)
-
         self.splunk_home = splunk_home
         self.username = username
         self.password = password
         self.scheme = scheme
+
+        if login:
+            self.login()
+
+    def login(self):
+        '''
+        get splunk instance
+        '''
+        self.splunk = client.connect(
+            username=self.username, password=self.password, scheme=self.scheme,
+            autologin=True)
 
     def cli(self, cli, auth="admin:changeme"):
         '''
