@@ -5,6 +5,7 @@ from splunklib.binding import HTTPError
 from util import run_cmd
 from exceptions import CommandExecutionError
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class Splunk(object):
         return splunk is running or not
         '''
         result = self.cli("status", auth=None)
-        return 'running' in result['stdout'].lower()
+        return 'pid' in result['stdout']
 
     def start(self):
         '''
