@@ -3,14 +3,15 @@ import netifaces
 from splunklib import client
 from splunklib.binding import HTTPError
 from util import run_cmd
+from util import MethodMissing
 from exceptions import CommandExecutionError
 import logging
-import sys
+
 
 logger = logging.getLogger(__name__)
 
 
-class Splunk(object):
+class Splunk(MethodMissing):
     '''
     This class represents a splunk instance
     '''
@@ -35,6 +36,13 @@ class Splunk(object):
 
         if login:
             self.login()
+
+    def method_missing(self, name):
+        if hasattr(self.splunk, name):
+            return getattr(self.splunk, name)
+        else:
+            raise AttributeError(
+                "Splunk does not respond to {n}".format(n=name))
 
     def login(self):
         '''
