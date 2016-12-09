@@ -3,14 +3,16 @@ import netifaces
 from splunklib import client
 from splunklib.binding import HTTPError
 from util import run_cmd
+from util import MethodMissing
 from exceptions import CommandExecutionError
 import logging
-import sys
+import json
+
 
 logger = logging.getLogger(__name__)
 
 
-class Splunk(object):
+class Splunk(MethodMissing):
     '''
     This class represents a splunk instance
     '''
@@ -35,6 +37,13 @@ class Splunk(object):
 
         if login:
             self.login()
+
+    def method_missing(self, name):
+        if hasattr(self.splunk, name):
+            return getattr(self.splunk, name)
+        else:
+            raise AttributeError(
+                "Splunk does not respond to {n}".format(n=name))
 
     def login(self):
         '''
@@ -82,11 +91,11 @@ class Splunk(object):
         restart splunk
         '''
         if 'cli' == interface:
-            self.cli('restart', auth=None)
+            return self.cli('restart', auth=None)
         elif 'rest' == interface:
-            self.splunk.restart()
+            return self.splunk.restart()
         else:
-            self.cli('restart', auth=None)
+            return self.cli('restart', auth=None)
 
     def change_namespace(self, owner, app, sharing):
         '''
@@ -490,6 +499,8 @@ class Splunk(object):
         :param remote_password: splunk password of the search peer
         :raise CommandExecutionError, if failed
         '''
+        if type(peers) is not list:
+            peers = [peers, ]
 
         for peer in peers:
             cmd = ('add search-server -host {h} -remoteUsername {u} '
@@ -513,7 +524,7 @@ class Splunk(object):
         if cli_result['retcode'] != 0:
             raise CommandExecutionError(str(cli_result))
 
-        restart_result = self.cli('restart')
+        restart_result = self.restart()
         if restart_result['retcode'] != 0:
             raise CommandExecutionError(str(restart_result))
 
@@ -587,13 +598,9 @@ class Splunk(object):
         get listening ports
         '''
         self.change_namespace('nobody', 'search', 'app')
-        stanzas = self.read_conf_file('inputs')
-
-        ret = []
-        for stanza in stanzas.list():
-            if 'splunktcp://' in stanza.name:
-                ret.append(stanza.name.replace('splunktcp://'))
-        return ret
+        resp = self.get('data/inputs/tcp/cooked', output_mode='json').body
+        resp = json.loads(resp.readall())
+        return [entry['name'] for entry in resp['entry']]
 
     def config_dmc(
             self, searchheads, deployer, indexers,
