@@ -1,3 +1,6 @@
+import json
+
+
 def test_read_config(install, splunk):
     '''
     test read conf file
@@ -47,3 +50,47 @@ def test_stop_splunk(install, splunk):
     '''
     splunk.stop()
     assert not splunk.is_running()
+
+
+def test_add_license(install, splunk, license):
+    '''
+    test adding splunk license
+    '''
+    splunk.add_license(license)
+    response = splunk.get('licenser/stacks', output_mode='json').body.readall()
+    response = json.loads(response)
+    assert 'enterprise' in [entry['name'] for entry in response['entry']]
+
+
+def test_config_deployment_client(install, splunk):
+    '''
+    test configuring deployment client
+    '''
+    server = 'titanium:8089'
+    splunk.config_deployment_client(server)
+    splunk.change_namespace('nobody', 'nobody', 'system')
+    target_uri = splunk.read_conf_file(
+        'deploymentclient', 'target-broker:deploymentServer', 'targetUri')
+    assert target_uri == server
+
+
+def test_enable_listen(install, splunk):
+    '''
+    test enable listening
+    '''
+    port = '9990'
+    splunk.enable_listen(port)
+    assert port in splunk.get_listening_ports()
+
+
+def test_add_forward_server(install, splunk):
+    '''
+    test adding forward server
+    '''
+    server = 'titanium:9995'
+    splunk.add_forward_server(server)
+    splunk.change_namespace('nobody', 'nobody','system')
+    conf = splunk.read_conf_file('outputs')
+
+    assert 'tcpout-server://' + server in [staza.name for staza in conf.list()]
+    assert server in conf['tcpout:default-autolb-group']['server'].split(',')

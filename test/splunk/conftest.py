@@ -14,6 +14,9 @@ def pytest_addoption(parser):
     parser.addoption(
         "--pkg-url", dest="pkg_url",
         help="url to the package for testing")
+    parser.addoption(
+        "--license-path", dest="license_path",
+        help="path to the license for testing")
 
 
 @pytest.fixture(scope='session')
@@ -36,3 +39,9 @@ def splunk(request):
     yield splunk
     if not splunk.is_running():
         splunk.start()
+
+
+@pytest.fixture(scope='function')
+def license(request):
+    config = request.config
+    yield config.getoption('--license-path')
